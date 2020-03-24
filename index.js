@@ -1,5 +1,8 @@
 const puppeteer = require('puppeteer');
 
+const dataObject = {};
+const jsonData = [];
+
 (async () => {
 
     try {
@@ -7,11 +10,7 @@ const puppeteer = require('puppeteer');
         const page = await browser.newPage();
         await page.goto('http://ongsbrasil.com.br/default.asp?Pag=37&ONG=&Estado=&Cidade=&Tipo=Animais&Atividade=&PageNo=1');
 
-        //await page.waitForFunction(
-        //    'document.querySelector("body")'
-        //);
-
-        await page.waitFor(150000);
+        await page.waitFor(80000);
 
         const result = await page.evaluate(() => {
             const titleColumn = Array.from(document.querySelectorAll('tr td div.text-capitalize h2.h3 a'));
@@ -37,46 +36,36 @@ const puppeteer = require('puppeteer');
 
             await page.goto(url, {
                 waitUntil: 'networkidle0',
-                timeout: 380000,
+                timeout: 600000,
             });
-
-            //console.log(`saving as pdf: ${url}`);
-
-            /*await page.pdf({
-                path: `${i}.pdf`,
-                format: 'Letter',
-                printBackground: true,
-            });*/
             
             console.log(`buscando dado: ${url}`);
 
-            const selectorTitle = 'h1.h1.text-capitalize'
+            const selectorTitle = 'h1.h1.text-capitalize';
             const selectorTable = 'table > tbody > tr';
 
             const title = await page.$$eval(selectorTitle, titles => 
-                titles.map(title => title.textContent)
+                 titles.map(title => title.textContent).toString()
             );
 
             const data = await page.$$eval(selectorTable, trs => trs.map(tr => {
                 const tds = [...tr.getElementsByTagName('td')];
                 return tds.map(td => td.textContent);
             }));
-            
-            /*for (let property in data) {                
-                //console.log(property + " = " + data[property].toString().replace(/:,/, ': '));
-                console.log(JSON.stringify(data[property].toString().replace(/:,/, ': ')));
-            }*/
 
             for (let property of data) {
-                console.log(property[0], `${property[1]},`);
+                dataObject[property[0].replace(/([\u0300-\u036f]|[^0-9a-zA-Z])/g,'')] = property[1];                
             }
 
-            console.log(`title: ${title}`);
+            const titleObj = { title }
+            const obj = Object.assign({}, titleObj, dataObject);
 
+
+            jsonData.push(obj);
+            console.log(JSON.stringify(jsonData));
             console.log(`closing page: ${url}`);
             await page.close();
         });
-
         
         await Promise.all(results).then(() => {
             browserTwo.close();
