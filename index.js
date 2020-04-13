@@ -6,9 +6,9 @@ const jsonData = [];
 (async () => {
 
     try {
-        const browser = await puppeteer.launch({ headless: false });
+        const browser = await puppeteer.launch({ headless: true });
         const page = await browser.newPage();
-        await page.goto('http://ongsbrasil.com.br/default.asp?Pag=37&ONG=&Estado=&Cidade=&Tipo=Animais&Atividade=&PageNo=1');
+        await page.goto('http://www.ongsbrasil.com.br/default.asp?Pag=37&ONG=&Estado=&Cidade=&Tipo=Meio%20Ambiente&Atividade=&PageNo=32');
 
         await page.waitFor(80000);
 
@@ -36,7 +36,7 @@ const jsonData = [];
 
             await page.goto(url, {
                 waitUntil: 'networkidle0',
-                timeout: 600000,
+                timeout: 880000,
             });
             
             console.log(`buscando dado: ${url}`);
@@ -49,17 +49,16 @@ const jsonData = [];
             );
 
             const data = await page.$$eval(selectorTable, trs => trs.map(tr => {
-                const tds = [...tr.getElementsByTagName('td')];
-                return tds.map(td => td.textContent);
+                const tds = [...tr.getElementsByTagName('td')];                
+                return tds.map(td =>  td.textContent === '' ? td.getElementsByTagName('input').item(0).value : td.textContent);
             }));
 
             for (let property of data) {
-                dataObject[property[0].replace(/([\u0300-\u036f]|[^0-9a-zA-Z])/g,'')] = property[1];                
+                dataObject[property[0].replace(/([\u0300-\u036f]|[^0-9a-zA-Z])/g,'')] = property[1];     
             }
 
-            const titleObj = { title }
+            const titleObj = { title };
             const obj = Object.assign({}, titleObj, dataObject);
-
 
             jsonData.push(obj);
             console.log(JSON.stringify(jsonData));
